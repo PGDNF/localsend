@@ -69,6 +69,25 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
       final previousWeb = ref.read(serverProvider)?.web;
       final webPin = previousWeb != null ? previousWeb.pin : (files == null ? settings.receivePin : null);
 
+      // Receiving via link is the default on Android, so the upload page is usually
+      // already served. Restarting the server would only interrupt it.
+      if (files == null) {
+        final current = ref.read(serverProvider);
+        final currentWeb = current?.web;
+        if (current != null &&
+            current.https == encrypted &&
+            current.port == settings.port &&
+            currentWeb is WebShareUpload &&
+            currentWeb.pin == webPin) {
+          if (mounted) {
+            setState(() {
+              _stateEnum = _ServerState.running;
+            });
+          }
+          return;
+        }
+      }
+
       if (files != null) {
         // The auto accept setting of a previous web download state is kept.
         await ref

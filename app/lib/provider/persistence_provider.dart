@@ -494,7 +494,9 @@ class PersistenceService {
   }
 
   bool isHttps() {
-    return _prefs.getBool(_https) ?? true;
+    // Android receives via link by default. Browsers would reject the self-signed certificate,
+    // so a fresh Android installation starts unencrypted (http) until the user enables encryption.
+    return _prefs.getBool(_https) ?? !checkPlatform([TargetPlatform.android]);
   }
 
   Future<void> setHttps(bool https) async {

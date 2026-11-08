@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/cross_file.dart';
 import 'package:localsend_app/model/state/server/server_state.dart';
@@ -10,6 +11,7 @@ import 'package:localsend_app/provider/network/server/controller/send_controller
 import 'package:localsend_app/provider/network/server/server_utils.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
+import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/web_pages_loader.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/isolate.dart';
@@ -20,6 +22,18 @@ import 'package:logging/logging.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 
 final _logger = Logger('Server');
+
+/// The web share mode the server runs with by default, i.e. without the user opening a share page.
+///
+/// Android defaults to receiving via link: the browser upload page is served on the normal port,
+/// so a sender only needs a browser and no LocalSend installation.
+/// App-to-app receiving is not affected because the v2 endpoints stay enabled.
+WebShareState? defaultWebShareState(String? receivePin) {
+  if (checkPlatform([TargetPlatform.android])) {
+    return WebShareUpload(pin: receivePin);
+  }
+  return null;
+}
 
 /// This provider runs the server and provides the current server state.
 /// It is a singleton provider, so only one server can be running at a time.
@@ -99,12 +113,17 @@ class ServerService extends Notifier<ServerState?> {
   }
 
   /// Starts the server from user settings.
+  ///
+  /// On Android, receiving via link is the default: the upload page is served as well,
+  /// so any device on the network can send files with a browser without installing LocalSend.
+  /// The regular app-to-app receiving keeps working in that mode.
   Future<ServerState?> startServerFromSettings() async {
     final settings = ref.read(settingsProvider);
     return startServer(
       alias: settings.alias,
       port: settings.port,
       https: settings.https,
+      web: defaultWebShareState(settings.receivePin),
     );
   }
 

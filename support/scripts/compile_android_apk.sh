@@ -2,6 +2,7 @@
 # The Android SDK should be installed with sdkmanager (apt install sdkmanager)
 # By default, it will install everything to "/opt/android-sdk". This path is important!
 # Furthermore, the Flutter version from the submodule is used.
+# Only the 64-bit ARM APK is built: no armeabi-v7a and no x86_64 variant.
 
 # Check Build ID via "readelf --wide --notes libapp.so"
 
@@ -25,7 +26,7 @@ alias flutter='submodules/flutter/bin/flutter'
 flutter config --no-analytics
 flutter pub get
 dart run build_runner build -d
-flutter build apk
+flutter build apk --release --target-platform android-arm64 --split-per-abi
 
 popd
 cd localsend

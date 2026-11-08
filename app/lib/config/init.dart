@@ -10,6 +10,7 @@ import 'package:localsend_app/config/refena.dart';
 import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/pages/home_page.dart';
 import 'package:localsend_app/pages/home_page_controller.dart';
+import 'package:localsend_app/pages/web_share_page.dart';
 import 'package:localsend_app/pages/whats_new_page.dart';
 import 'package:localsend_app/provider/animation_provider.dart';
 import 'package:localsend_app/provider/app_arguments_provider.dart';
@@ -307,6 +308,12 @@ Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
     // Clear cache on every app start.
     // If we received a share intent, then don't clear it, otherwise the shared file will be lost.
     ref.global.dispatchAsync(ClearCacheAction()); // ignore: unawaited_futures
+  }
+
+  if (appStart && !hasInitialShare && checkPlatform([TargetPlatform.android])) {
+    // Android receives via link by default, so open the page that shows the link right away.
+    // ignore: unawaited_futures
+    ref.global.dispatchAsync(NavigateAction.push(const WebSharePage()));
   }
 
   if (!ref.read(persistenceProvider).isFirstAppStart) {

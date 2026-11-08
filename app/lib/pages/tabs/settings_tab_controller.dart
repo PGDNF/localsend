@@ -134,11 +134,8 @@ class SettingsTabController extends ReduxNotifier<SettingsTabVm> {
       },
       onTapRestartServer: (context) async {
         try {
-          final newServerState = await _serverService.restartServer(
-            alias: _settingsService.state.alias,
-            port: _settingsService.state.port,
-            https: _settingsService.state.https,
-          );
+          // Restart from settings so that the default web share mode (receive via link on Android) is kept.
+          final newServerState = await _serverService.restartServerFromSettings();
 
           if (newServerState != null) {
             // the new state is always valid, so we can "repair" user's setting

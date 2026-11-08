@@ -22,6 +22,15 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// A release keystore is only usable when key.properties and the store file it points to exist.
+// Signing secrets are optional for forks, which fall back to the debug key.
+def releaseKeystoreProperties = new Properties()
+def releaseKeystoreFile = rootProject.file('key.properties')
+if (releaseKeystoreFile.exists()) {
+    releaseKeystoreProperties.load(new FileInputStream(releaseKeystoreFile))
+}
+def hasReleaseKeystore = releaseKeystoreProperties['storeFile'] != null && file(releaseKeystoreProperties['storeFile']).exists()
+
 android {
     namespace "org.localsend.localsend_app"
     compileSdkVersion 36
@@ -52,22 +61,23 @@ android {
 
     signingConfigs {
         release {
-            def keystoreProperties = new Properties()
-            def keystorePropertiesFile = rootProject.file('key.properties')
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-            }
-
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            keyAlias releaseKeystoreProperties['keyAlias']
+            keyPassword releaseKeystoreProperties['keyPassword']
+            storeFile releaseKeystoreProperties['storeFile'] ? file(releaseKeystoreProperties['storeFile']) : null
+            storePassword releaseKeystoreProperties['storePassword']
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            // Without a usable release keystore (e.g. a fork without signing secrets),
+            // sign with the debug key so that an installable APK is still produced.
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+
+            // Only 64-bit ARM is built. No armeabi-v7a or x86_64 variant.
+            ndk {
+                abiFilters "arm64-v8a"
+            }
         }
         debug {
             applicationIdSuffix ".debug"
