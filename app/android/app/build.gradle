@@ -73,11 +73,6 @@ android {
             // Without a usable release keystore (e.g. a fork without signing secrets),
             // sign with the debug key so that an installable APK is still produced.
             signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
-
-            // Only 64-bit ARM is built. No armeabi-v7a or x86_64 variant.
-            ndk {
-                abiFilters "arm64-v8a"
-            }
         }
         debug {
             applicationIdSuffix ".debug"
