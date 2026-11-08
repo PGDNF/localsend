@@ -60,25 +60,21 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
       _encrypted = encrypted;
       _initializedError = null;
     });
-    await sleepAsync(500);
-    try {
-      final files = widget.files;
 
-      // The pin of a previous web share session is kept;
-      // receive mode initially uses the receive pin from settings.
-      final previousWeb = ref.read(serverProvider)?.web;
-      final webPin = previousWeb != null ? previousWeb.pin : (files == null ? settings.receivePin : null);
+    final files = widget.files;
 
-      // Receiving via link is the default on Android, so the upload page is usually
-      // already served. Restarting the server would only interrupt it.
-      if (files == null) {
-        final current = ref.read(serverProvider);
-        final currentWeb = current?.web;
-        if (current != null &&
-            current.https == encrypted &&
-            current.port == settings.port &&
-            currentWeb is WebShareUpload &&
-            currentWeb.pin == webPin) {
+    // The pin of a previous web share session is kept;
+    // receive mode initially uses the receive pin from settings.
+    final previousWeb = ref.read(serverProvider)?.web;
+    final webPin = previousWeb != null ? previousWeb.pin : (files == null ? settings.receivePin : null);
+
+    // Receiving via link is the default on Android, so the upload page is usually already
+    // served with the wanted configuration. Restarting the server would only interrupt it.
+    if (files == null) {
+      final current = ref.read(serverProvider);
+      if (current != null && current.https == encrypted && current.port == settings.port) {
+        final currentWeb = current.web;
+        if (currentWeb is WebShareUpload && currentWeb.pin == webPin) {
           if (mounted) {
             setState(() {
               _stateEnum = _ServerState.running;
@@ -87,7 +83,10 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
           return;
         }
       }
+    }
 
+    await sleepAsync(500);
+    try {
       if (files != null) {
         // The auto accept setting of a previous web download state is kept.
         await ref
