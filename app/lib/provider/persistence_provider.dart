@@ -381,7 +381,9 @@ class PersistenceService {
   }
 
   bool getShareViaLinkAutoAccept() {
-    return _prefs.getBool(_shareViaLinkAutoAccept) ?? false;
+    // Android shares via link by default. The recipient should be able to download
+    // right after opening the link, so requests are accepted without manual confirmation.
+    return _prefs.getBool(_shareViaLinkAutoAccept) ?? checkPlatform([TargetPlatform.android]);
   }
 
   Future<void> setShareViaLinkAutoAccept(bool shareViaLinkAutoAccept) async {

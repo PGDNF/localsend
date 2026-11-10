@@ -229,9 +229,12 @@
     function handleFilesDisplay(files, sessionId) {
       var html = '';
       var fileKeys = getKeys(files);
+      var urls = [];
       for (var i = 0; i < fileKeys.length; i++) {
         var file = files[fileKeys[i]];
-        html += '<a class="file-item" href="' + BASE_URL + '/download?sessionId=' + encodeURIComponent(sessionId) + '&fileId=' + encodeURIComponent(fileKeys[i]) + '">' +
+        var url = fileUrl(sessionId, fileKeys[i]);
+        urls.push(url);
+        html += '<a class="file-item" href="' + url + '">' +
             '<div class="file-index-cell">' + (i + 1) + '</div>' +
             '<div class="file-name-cell">' + escapeHtml(file.fileName) + '</div>' +
             '<div class="file-size-cell">' + formatBytes(file.size) + '</div>' +
@@ -240,9 +243,74 @@
 
       if (fileKeys.length === 1) {
         document.getElementById('single-file').innerHTML = html;
+        // Start the download right away; the link above stays as a manual fallback.
+        // Guard per session so reloading the page does not download the file twice.
+        var autoKey = 'autoDownloaded-' + sessionId;
+        if (!sessionStorage.getItem(autoKey)) {
+          sessionStorage.setItem(autoKey, '1');
+          triggerDownload(urls[0]);
+        }
       } else {
-        document.getElementById('file-list').innerHTML = html;
+        var downloadAllHtml = '<a id="download-all" href="javascript:void(0)" style="display:inline-block;padding:0.5em 1.5em;background-color:#00796B;border-radius:0.5em;margin-bottom:1em;">' +
+            escapeHtml(downloadAllText()) + '</a>';
+        document.getElementById('file-list').innerHTML = downloadAllHtml + html;
+        document.getElementById('download-all').onclick = function () {
+          // One download per second: browsers may ask for permission to
+          // download multiple files, and the sender resolves each file lazily.
+          for (var j = 0; j < urls.length; j++) {
+            (function (url, delay) {
+              setTimeout(function () {
+                triggerDownload(url);
+              }, delay);
+            })(urls[j], j * 1000);
+          }
+        };
       }
+    }
+
+    function fileUrl(sessionId, fileId) {
+      return BASE_URL + '/download?sessionId=' + encodeURIComponent(sessionId) + '&fileId=' + encodeURIComponent(fileId);
+    }
+
+    function triggerDownload(url) {
+      // A hidden iframe starts the download without leaving this page.
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      setTimeout(function () {
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+      }, 60000);
+    }
+
+    function downloadAllText() {
+      var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+      var translations = {
+        'zh': '下载全部',
+        'zh-cn': '下载全部',
+        'zh-sg': '下载全部',
+        'zh-tw': '下載全部',
+        'zh-hk': '下載全部',
+        'ja': 'すべてダウンロード',
+        'ko': '모두 다운로드',
+        'de': 'Alle herunterladen',
+        'fr': 'Tout télécharger',
+        'es': 'Descargar todo',
+        'it': 'Scarica tutto',
+        'pt': 'Baixar tudo',
+        'ru': 'Скачать всё',
+        'uk': 'Завантажити все',
+        'pl': 'Pobierz wszystko',
+        'tr': 'Tümünü indir',
+        'ar': 'تنزيل الكل',
+        'vi': 'Tải xuống tất cả',
+        'id': 'Unduh semua',
+        'th': 'ดาวน์โหลดทั้งหมด',
+        'hi': 'सभी डाउनलोड करें'
+      };
+      return translations[lang] || translations[lang.split('-')[0]] || 'Download all';
     }
 
     function escapeHtml(text) {

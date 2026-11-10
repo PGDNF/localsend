@@ -167,6 +167,24 @@ class SendTab extends StatelessWidget {
                 ),
               ),
             ],
+            // Android shares via link by default, so offer it as the primary action.
+            if (vm.selectedFiles.isNotEmpty && checkPlatform([TargetPlatform.android]))
+              Padding(
+                padding: const EdgeInsets.only(left: _horizontalPadding, right: _horizontalPadding, bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    onPressed: () async => vm.onTapSendMode(context, SendMode.link),
+                    icon: const Icon(Icons.link),
+                    label: Text(t.sendTab.sendModes.link),
+                  ),
+                ),
+              ),
             Row(
               children: [
                 const SizedBox(width: _horizontalPadding),
