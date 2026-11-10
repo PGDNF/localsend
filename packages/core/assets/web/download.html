@@ -24,6 +24,14 @@
             padding: 0 1em;
             margin: 0 auto;
             text-align: left;
+            overflow: hidden;
+        }
+
+        .file-group-title {
+            clear: both;
+            font-weight: bold;
+            padding: 0.5em 0;
+            color: #424242;
         }
 
         .file-item {
@@ -41,7 +49,7 @@
             background-color: #009688;
         }
 
-        .file-name-cell, .file-size-cell, .file-index-cell {
+        .file-name-cell, .file-size-cell {
             display: table-cell;
             vertical-align: middle;
         }
@@ -51,7 +59,7 @@
             padding: 0 0.5em;
         }
 
-        .file-size-cell, .file-index-cell {
+        .file-size-cell {
             font-size: 0.8em;
             white-space: nowrap;
             color: #E0E0E0;
@@ -227,34 +235,55 @@
     }
 
     function handleFilesDisplay(files, sessionId) {
-      var html = '';
       var fileKeys = getKeys(files);
       var urls = [];
+      var items = [];
       for (var i = 0; i < fileKeys.length; i++) {
         var file = files[fileKeys[i]];
         var url = fileUrl(sessionId, fileKeys[i]);
         urls.push(url);
-        html += '<a class="file-item" href="' + url + '">' +
-            '<div class="file-index-cell">' + (i + 1) + '</div>' +
-            '<div class="file-name-cell">' + escapeHtml(file.fileName) + '</div>' +
-            '<div class="file-size-cell">' + formatBytes(file.size) + '</div>' +
-            '</a>';
+        items.push({
+          group: fileGroup(file.fileType),
+          html: '<a class="file-item" href="' + url + '">' +
+              '<div class="file-name-cell">' + escapeHtml(file.fileName) + '</div>' +
+              '<div class="file-size-cell">' + formatBytes(file.size) + '</div>' +
+              '</a>'
+        });
       }
 
       if (fileKeys.length === 1) {
-        document.getElementById('single-file').innerHTML = html;
-        // Start the download right away; the link above stays as a manual fallback.
-        // Guard per session so reloading the page does not download the file twice.
-        var autoKey = 'autoDownloaded-' + sessionId;
-        if (!sessionStorage.getItem(autoKey)) {
-          sessionStorage.setItem(autoKey, '1');
-          triggerDownload(urls[0]);
-        }
-      } else {
-        var downloadAllHtml = '<a id="download-all" href="javascript:void(0)" style="display:inline-block;padding:0.5em 1.5em;background-color:#00796B;border-radius:0.5em;margin-bottom:1em;">' +
+        // A single file is downloaded only after clicking it.
+        document.getElementById('single-file').innerHTML = items[0].html;
+        return;
+      }
+
+      var html = '';
+      if (fileKeys.length > 1) {
+        html += '<a id="download-all" href="javascript:void(0)" style="display:inline-block;padding:0.5em 1.5em;background-color:#00796B;border-radius:0.5em;margin-bottom:1em;">' +
             escapeHtml(downloadAllText()) + '</a>';
-        document.getElementById('file-list').innerHTML = downloadAllHtml + html;
-        document.getElementById('download-all').onclick = function () {
+      }
+
+      // Group the files by type instead of showing one mixed list.
+      var groups = ['image', 'video', 'pdf', 'text', 'apk', 'other'];
+      for (var g = 0; g < groups.length; g++) {
+        var groupHtml = '';
+        var count = 0;
+        for (var k = 0; k < items.length; k++) {
+          if (items[k].group === groups[g]) {
+            count++;
+            groupHtml += items[k].html;
+          }
+        }
+        if (count > 0) {
+          html += '<div class="file-group-title">' + escapeHtml(groupText(groups[g])) + ' (' + count + ')</div>' + groupHtml;
+        }
+      }
+
+      document.getElementById('file-list').innerHTML = html;
+
+      var downloadAll = document.getElementById('download-all');
+      if (downloadAll) {
+        downloadAll.onclick = function () {
           // One download per second: browsers may ask for permission to
           // download multiple files, and the sender resolves each file lazily.
           for (var j = 0; j < urls.length; j++) {
@@ -266,6 +295,62 @@
           }
         };
       }
+    }
+
+    function fileGroup(fileType) {
+      // The sender transmits the type as MIME type (or as legacy enum name).
+      var type = fileType || '';
+      if (type.indexOf('image/') === 0 || type === 'image') {
+        return 'image';
+      }
+      if (type.indexOf('video/') === 0 || type === 'video') {
+        return 'video';
+      }
+      if (type === 'application/pdf' || type === 'pdf') {
+        return 'pdf';
+      }
+      if (type.indexOf('text/') === 0 || type === 'text') {
+        return 'text';
+      }
+      if (type === 'application/vnd.android.package-archive' || type === 'apk') {
+        return 'apk';
+      }
+      return 'other';
+    }
+
+    function groupText(group) {
+      var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+      // Labels in the order of the groups array above.
+      var translations = {
+        'en': ['Images', 'Videos', 'PDF', 'Text', 'Apps', 'Other'],
+        'zh': ['图片', '视频', 'PDF 文档', '文本', '应用', '其他'],
+        'zh-tw': ['圖片', '影片', 'PDF 文件', '文字', '應用程式', '其他'],
+        'zh-hk': ['圖片', '視頻', 'PDF 文件', '文字', '應用程式', '其他'],
+        'ja': ['画像', '動画', 'PDF', 'テキスト', 'アプリ', 'その他'],
+        'ko': ['이미지', '동영상', 'PDF', '텍스트', '앱', '기타'],
+        'de': ['Bilder', 'Videos', 'PDF', 'Text', 'Apps', 'Sonstige'],
+        'fr': ['Images', 'Vidéos', 'PDF', 'Texte', 'Applications', 'Autres'],
+        'es': ['Imágenes', 'Vídeos', 'PDF', 'Texto', 'Aplicaciones', 'Otros'],
+        'it': ['Immagini', 'Video', 'PDF', 'Testo', 'App', 'Altro'],
+        'pt': ['Imagens', 'Vídeos', 'PDF', 'Texto', 'Aplicativos', 'Outros'],
+        'ru': ['Изображения', 'Видео', 'PDF', 'Текст', 'Приложения', 'Другое'],
+        'uk': ['Зображення', 'Відео', 'PDF', 'Текст', 'Додатки', 'Інше'],
+        'pl': ['Obrazy', 'Filmy', 'PDF', 'Tekst', 'Aplikacje', 'Inne'],
+        'tr': ['Resimler', 'Videolar', 'PDF', 'Metin', 'Uygulamalar', 'Diğer'],
+        'ar': ['صور', 'فيديو', 'PDF', 'نصوص', 'تطبيقات', 'أخرى'],
+        'vi': ['Hình ảnh', 'Video', 'PDF', 'Văn bản', 'Ứng dụng', 'Khác'],
+        'id': ['Gambar', 'Video', 'PDF', 'Teks', 'Aplikasi', 'Lainnya'],
+        'th': ['รูปภาพ', 'วิดีโอ', 'PDF', 'ข้อความ', 'แอป', 'อื่นๆ'],
+        'hi': ['चित्र', 'वीडियो', 'PDF', 'टेक्स्ट', 'ऐप', 'अन्य']
+      };
+      var labels = translations[lang] || translations[lang.split('-')[0]] || translations['en'];
+      var groups = ['image', 'video', 'pdf', 'text', 'apk', 'other'];
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i] === group) {
+          return labels[i];
+        }
+      }
+      return group;
     }
 
     function fileUrl(sessionId, fileId) {
