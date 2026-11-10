@@ -7,6 +7,7 @@ import 'package:localsend_app/pages/device_details_page.dart';
 import 'package:localsend_app/pages/selected_files_page.dart';
 import 'package:localsend_app/pages/tabs/send_tab_vm.dart';
 import 'package:localsend_app/pages/troubleshoot_page.dart';
+import 'package:localsend_app/pages/web_share_page.dart';
 import 'package:localsend_app/provider/animation_provider.dart';
 import 'package:localsend_app/provider/file_transfer_provider.dart';
 import 'package:localsend_app/provider/network/nearby_devices_provider.dart';
@@ -14,6 +15,7 @@ import 'package:localsend_app/provider/network/scan_facade.dart';
 import 'package:localsend_app/provider/network/send_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/util/favorites.dart';
 import 'package:localsend_app/util/native/file_picker.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
@@ -50,6 +52,7 @@ class SendTab extends StatelessWidget {
         final sizingInformation = SizingInformation(MediaQuery.sizeOf(context).width);
         final buttonWidth = sizingInformation.isDesktop ? BigButton.desktopWidth : BigButton.mobileWidth;
         final ref = context.ref;
+        final sharedDirectory = ref.watch(sharedDirectoryProvider);
         return ResponsiveListView(
           padding: EdgeInsets.zero,
           children: [
@@ -67,19 +70,29 @@ class SendTab extends StatelessWidget {
                 outerVerticalPadding: 10,
                 childPadding: 10,
                 minChildWidth: buttonWidth,
-                children: pickerOptions.map((option) {
-                  return BigButton(
-                    icon: option.icon,
-                    label: option.label,
-                    filled: false,
-                    onTap: () async => ref.global.dispatchAsync(
-                      PickFileAction(
-                        option: option,
-                        context: context,
+                children: [
+                  ...pickerOptions.map((option) {
+                    return BigButton(
+                      icon: option.icon,
+                      label: option.label,
+                      filled: false,
+                      onTap: () async => ref.global.dispatchAsync(
+                        PickFileAction(
+                          option: option,
+                          context: context,
+                        ),
                       ),
+                    );
+                  }),
+                  // The configured shared folder is shared on demand via its own download link.
+                  if (sharedDirectory != null)
+                    BigButton(
+                      icon: Icons.folder_shared,
+                      label: t.settingsTab.sharedDirectory.title,
+                      filled: false,
+                      onTap: () async => ref.global.dispatchAsync(NavigateAction.push(const WebSharePage(sharedFolder: true))),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ] else ...[
               Card(

@@ -1006,7 +1006,7 @@ class Translations$settingsTab$sharedDirectory$zh_CN extends Translations$settin
   @override
   String get notSet => '未设置';
   @override
-  String get hint => '任何打开链接的人都可以下载此目录中的文件。你可以使用文件管理器向目录中自由放置文件。点击按钮可清除已设置的目录。';
+  String get hint => '在发送页分享此目录后，任何打开链接的人都可以下载其中的文件。你可以使用文件管理器向目录中自由放置文件。点击按钮可清除已设置的目录。';
 }
 
 // Path: settingsTab.send

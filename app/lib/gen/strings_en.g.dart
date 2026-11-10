@@ -1161,9 +1161,9 @@ class Translations$settingsTab$sharedDirectory$en {
   /// en: 'Not set'
   String get notSet => 'Not set';
 
-  /// en: 'Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder.'
+  /// en: 'Share this folder from the Send tab to let anyone with the link download its files. Use your file manager to place files into it freely. Tap the button to clear the configured folder.'
   String get hint =>
-      'Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder.';
+      'Share this folder from the Send tab to let anyone with the link download its files. Use your file manager to place files into it freely. Tap the button to clear the configured folder.';
 }
 
 // Path: settingsTab.send

@@ -122,7 +122,6 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
               https: _encrypted,
               files: files,
               pin: webPin,
-              sharedDirectory: widget.sharedFolder,
             );
       } else {
         await ref

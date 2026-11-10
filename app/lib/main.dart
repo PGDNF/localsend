@@ -68,11 +68,6 @@ class LocalSendApp extends StatelessWidget {
                   // ignore: discarded_futures
                   ref.notifier(serverProvider).ensureRunning();
                 }
-                if (checkPlatform([TargetPlatform.android])) {
-                  // Files may have been placed into the shared directory with the file manager meanwhile.
-                  // ignore: discarded_futures
-                  ref.notifier(serverProvider).refreshSharedDirectoryShare();
-                }
                 if (checkPlatform([TargetPlatform.iOS])) {
                   // The multicast sockets die the same silent way but cannot be probed, so always rebind them.
                   ref.redux(parentIsolateProvider).dispatch(IsolateDiscoveryRestartAction());

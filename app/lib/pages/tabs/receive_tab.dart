@@ -9,7 +9,6 @@ import 'package:localsend_app/provider/animation_provider.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
-import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/util/ip_helper.dart';
 import 'package:localsend_app/widget/animations/initial_fade_transition.dart';
 import 'package:localsend_app/widget/column_list_view.dart';
@@ -108,9 +107,7 @@ class _ReceiveTabState extends State<ReceiveTab> {
                     child: Center(
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          // Show what the link actually serves: the shared directory when configured.
-                          final sharedFolder = context.read(sharedDirectoryProvider) != null;
-                          await context.global.dispatchAsync(NavigateAction.push(WebSharePage(sharedFolder: sharedFolder)));
+                          await context.global.dispatchAsync(NavigateAction.push(const WebSharePage()));
                         },
                         icon: Icon(Icons.language),
                         label: Text(t.receiveTab.link),

@@ -130,7 +130,7 @@
       "title": "Shared folder",
       "folder": "Folder",
       "notSet": "Not set",
-      "hint": "Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder."
+      "hint": "Share this folder from the Send tab to let anyone with the link download its files. Use your file manager to place files into it freely. Tap the button to clear the configured folder."
     },
     "send": {
       "title": "Send",
