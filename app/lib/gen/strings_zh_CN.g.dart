@@ -248,6 +248,8 @@ class Translations$settingsTab$zh_CN extends Translations$settingsTab$en {
   @override
   late final Translations$settingsTab$receive$zh_CN receive = Translations$settingsTab$receive$zh_CN.internal(_root);
   @override
+  late final Translations$settingsTab$sharedDirectory$zh_CN sharedDirectory = Translations$settingsTab$sharedDirectory$zh_CN.internal(_root);
+  @override
   late final Translations$settingsTab$send$zh_CN send = Translations$settingsTab$send$zh_CN.internal(_root);
   @override
   late final Translations$settingsTab$network$zh_CN network = Translations$settingsTab$network$zh_CN.internal(_root);
@@ -988,6 +990,23 @@ class Translations$settingsTab$receive$zh_CN extends Translations$settingsTab$re
   String get saveToHistory => '保存到历史记录';
   @override
   String get verifyChecksums => '接收文件时验证校验和';
+}
+
+// Path: settingsTab.sharedDirectory
+class Translations$settingsTab$sharedDirectory$zh_CN extends Translations$settingsTab$sharedDirectory$en {
+  Translations$settingsTab$sharedDirectory$zh_CN.internal(TranslationsZhCn root) : this._root = root, super.internal(root);
+
+  final TranslationsZhCn _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => '共享目录';
+  @override
+  String get folder => '目录';
+  @override
+  String get notSet => '未设置';
+  @override
+  String get hint => '任何打开链接的人都可以下载此目录中的文件。你可以使用文件管理器向目录中自由放置文件。点击按钮可清除已设置的目录。';
 }
 
 // Path: settingsTab.send

@@ -10,6 +10,7 @@ import 'package:localsend_app/pages/settings/network_interfaces_page.dart';
 import 'package:localsend_app/pages/tabs/settings_tab_controller.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/device_type_ext.dart';
@@ -18,6 +19,7 @@ import 'package:localsend_app/util/native/device_info_helper.dart';
 import 'package:localsend_app/util/native/macos_channel.dart';
 import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/util/native/shared_directory.dart';
 import 'package:localsend_app/widget/custom_dropdown_button.dart';
 import 'package:localsend_app/widget/dialogs/encryption_disabled_notice.dart';
 import 'package:localsend_app/widget/dialogs/pin_dialog.dart';
@@ -30,9 +32,13 @@ import 'package:localsend_app/widget/local_send_logo.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/model/device.dart';
+import 'package:logging/logging.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 import 'package:routerino/routerino.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+final _logger = Logger('SettingsTab');
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab();
@@ -284,6 +290,55 @@ class SettingsTab extends StatelessWidget {
                   ),
               ],
             ),
+            if (checkPlatform([TargetPlatform.android]))
+              Consumer(
+                builder: (context, ref) {
+                  final directory = ref.watch(sharedDirectoryProvider);
+                  return _SettingsSection(
+                    title: t.settingsTab.sharedDirectory.title,
+                    children: [
+                      _SettingsEntry(
+                        label: t.settingsTab.sharedDirectory.folder,
+                        description: t.settingsTab.sharedDirectory.hint,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                            backgroundColor: Theme.of(context).inputDecorationTheme.fillColor,
+                            shape: RoundedRectangleBorder(borderRadius: Theme.of(context).inputDecorationTheme.borderRadius),
+                            foregroundColor: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          onPressed: () async {
+                            if (directory != null) {
+                              await ref.notifier(sharedDirectoryProvider).setDirectory(null);
+                            } else {
+                              try {
+                                await Permission.storage.request();
+                              } catch (e) {
+                                _logger.warning('Failed to request storage permission', e);
+                              }
+                              final directory = await pickDirectoryPath();
+                              if (directory == null) {
+                                return;
+                              }
+                              await ref.notifier(sharedDirectoryProvider).setDirectory(directory);
+                            }
+                            if (ref.read(serverProvider) != null) {
+                              await ref.notifier(serverProvider).restartServerFromSettings();
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Text(
+                              directory != null ? sharedDirectoryName(directory) : t.settingsTab.sharedDirectory.notSet,
+                              style: Theme.of(context).textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             if (vm.advanced)
               _SettingsSection(
                 title: t.settingsTab.send.title,

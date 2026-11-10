@@ -126,6 +126,12 @@
       "saveToHistory": "Save to history",
       "verifyChecksums": "Verify checksums when receiving files"
     },
+    "sharedDirectory": {
+      "title": "Shared folder",
+      "folder": "Folder",
+      "notSet": "Not set",
+      "hint": "Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder."
+    },
     "send": {
       "title": "Send",
       "shareViaLinkAutoAccept": "Automatically accept requests in \"Share via link\" mode",

@@ -273,6 +273,7 @@ class Translations$settingsTab$en {
 
   late final Translations$settingsTab$general$en general = Translations$settingsTab$general$en.internal(_root);
   late final Translations$settingsTab$receive$en receive = Translations$settingsTab$receive$en.internal(_root);
+  late final Translations$settingsTab$sharedDirectory$en sharedDirectory = Translations$settingsTab$sharedDirectory$en.internal(_root);
   late final Translations$settingsTab$send$en send = Translations$settingsTab$send$en.internal(_root);
   late final Translations$settingsTab$network$en network = Translations$settingsTab$network$en.internal(_root);
   late final Translations$settingsTab$other$en other = Translations$settingsTab$other$en.internal(_root);
@@ -1141,6 +1142,28 @@ class Translations$settingsTab$receive$en {
 
   /// en: 'Verify checksums when receiving files'
   String get verifyChecksums => 'Verify checksums when receiving files';
+}
+
+// Path: settingsTab.sharedDirectory
+class Translations$settingsTab$sharedDirectory$en {
+  Translations$settingsTab$sharedDirectory$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Shared folder'
+  String get title => 'Shared folder';
+
+  /// en: 'Folder'
+  String get folder => 'Folder';
+
+  /// en: 'Not set'
+  String get notSet => 'Not set';
+
+  /// en: 'Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder.'
+  String get hint =>
+      'Anyone with the link can download the files in this folder. Use your file manager to place files into it freely. Tap the button to clear the configured folder.';
 }
 
 // Path: settingsTab.send

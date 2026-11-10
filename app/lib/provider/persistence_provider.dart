@@ -79,6 +79,7 @@ const _networkBlacklistKey = 'ls_network_blacklist';
 const _timeoutKey = 'ls_timeout';
 const _multicastGroupKey = 'ls_multicast_group';
 const _destinationKey = 'ls_destination';
+const _sharedDirectoryKey = 'ls_shared_directory';
 const _saveToGallery = 'ls_save_to_gallery';
 const _saveToHistory = 'ls_save_to_history';
 const _quickSave = 'ls_quick_save'; // a QuickSaveMode; was a bool until storage version 2 ('ls_quick_save_from_favorites' is merged into this key)
@@ -431,6 +432,19 @@ class PersistenceService {
       await _prefs.remove(_destinationKey);
     } else {
       await _prefs.setString(_destinationKey, destination);
+    }
+  }
+
+  /// The directory shared via link (Android: SAF tree URI, older devices: raw path).
+  String? getSharedDirectory() {
+    return _prefs.getString(_sharedDirectoryKey);
+  }
+
+  Future<void> setSharedDirectory(String? directory) async {
+    if (directory == null) {
+      await _prefs.remove(_sharedDirectoryKey);
+    } else {
+      await _prefs.setString(_sharedDirectoryKey, directory);
     }
   }
 

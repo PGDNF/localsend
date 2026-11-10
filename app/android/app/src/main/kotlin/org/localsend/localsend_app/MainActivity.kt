@@ -98,6 +98,8 @@ class MainActivity : FlutterActivity() {
                     openDirectoryPicker(onlyPath = true)
                 }
 
+                "listDirectory" -> handleListDirectory(call, result)
+
                 "createDirectory" -> handleCreateDirectory(call, result)
 
                 "getFileDescriptor" -> handleGetFileDescriptor(call, result)
@@ -436,6 +438,25 @@ class MainActivity : FlutterActivity() {
                 pendingResult?.success(resultList.map { it.toMap() })
                 pendingResult = null
             }
+        }
+    }
+
+    /// Lists the files of an already picked tree URI (persistable permission required).
+    private fun handleListDirectory(call: MethodCall, result: MethodChannel.Result) {
+        val uriString = call.argument<String>("uri")
+        if (uriString == null) {
+            result.error("INVALID_ARGUMENT", "Missing directory URI", null)
+            return
+        }
+
+        try {
+            val files = mutableListOf<FileInfo>()
+            listFiles(Uri.parse(uriString), files)
+            result.success(files.map { it.toMap() })
+        } catch (e: SecurityException) {
+            result.error("PERMISSION_DENIED", e.message ?: "Permission denied for directory", null)
+        } catch (e: Exception) {
+            result.error("LIST_FAILED", e.message ?: "Failed to list directory", null)
         }
     }
 

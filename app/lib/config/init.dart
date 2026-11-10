@@ -24,6 +24,7 @@ import 'package:localsend_app/provider/purchase_provider.dart';
 // [FOSS_REMOVE_END]
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/provider/tv_provider.dart';
 import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/provider/window_dimensions_provider.dart';
@@ -312,8 +313,9 @@ Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
 
   if (appStart && !hasInitialShare && checkPlatform([TargetPlatform.android])) {
     // Android receives via link by default, so open the page that shows the link right away.
+    // When a shared directory is configured, its content is offered for download instead.
     // ignore: unawaited_futures
-    ref.global.dispatchAsync(NavigateAction.push(const WebSharePage()));
+    ref.global.dispatchAsync(NavigateAction.push(WebSharePage(sharedFolder: ref.read(sharedDirectoryProvider) != null)));
   }
 
   if (!ref.read(persistenceProvider).isFirstAppStart) {

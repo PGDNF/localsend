@@ -7,7 +7,9 @@ import 'package:localsend_app/model/state/server/web_share_state.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/util/native/shared_directory.dart';
 import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:localsend_app/widget/dialogs/pin_dialog.dart';
 import 'package:localsend_app/widget/dialogs/qr_dialog.dart';
@@ -27,12 +29,18 @@ enum _ServerState { initializing, running, error, stopping }
 /// - receive: serves the upload page so browsers can upload files to this device.
 ///   Incoming requests are not listed here because they open the receive page
 ///   like any other incoming request.
+///
+/// With [WebSharePage.sharedFolder], the current content of the configured shared
+/// directory is offered for download instead of static files (re-read on every init).
 class WebSharePage extends StatefulWidget {
   /// The files offered for download (share via link).
   /// `null` serves the upload page instead (receive via link).
   final List<CrossFile>? files;
 
-  const WebSharePage({this.files});
+  /// Whether the configured shared directory is offered for download.
+  final bool sharedFolder;
+
+  const WebSharePage({this.files, this.sharedFolder = false});
 
   @override
   State<WebSharePage> createState() => _WebSharePageState();
@@ -43,7 +51,10 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
   bool _encrypted = false;
   String? _initializedError;
 
-  bool get _sendMode => widget.files != null;
+  /// The shared directory became unreadable, so the upload page is served instead.
+  bool _folderFallback = false;
+
+  bool get _sendMode => (widget.files != null || widget.sharedFolder) && !_folderFallback;
 
   @override
   void initState() {
@@ -59,14 +70,28 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
       _stateEnum = _ServerState.initializing;
       _encrypted = encrypted;
       _initializedError = null;
+      _folderFallback = false;
     });
 
-    final files = widget.files;
+    List<CrossFile>? files = widget.files;
+    if (widget.sharedFolder) {
+      final directory = ref.read(sharedDirectoryProvider);
+      files = directory == null ? null : await loadSharedDirectoryFiles(directory);
+      if (files == null) {
+        // The directory is gone or unreadable (e.g. revoked permission): serve the upload page.
+        _logger.warning('Could not load the shared directory. Serving the upload page instead.');
+        if (mounted) {
+          setState(() {
+            _folderFallback = true;
+          });
+        }
+      }
+    }
 
     // The pin of a previous web share session is kept;
     // receive mode initially uses the receive pin from settings.
     final previousWeb = ref.read(serverProvider)?.web;
-    final webPin = previousWeb != null ? previousWeb.pin : (files == null ? settings.receivePin : null);
+    final webPin = previousWeb != null ? previousWeb.pin : ((files == null || widget.sharedFolder) ? settings.receivePin : null);
 
     // Receiving via link is the default on Android, so the upload page is usually already
     // served with the wanted configuration. Restarting the server would only interrupt it.
@@ -97,6 +122,7 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
               https: _encrypted,
               files: files,
               pin: webPin,
+              sharedDirectory: widget.sharedFolder,
             );
       } else {
         await ref

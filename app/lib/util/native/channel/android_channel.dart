@@ -30,6 +30,17 @@ Future<String?> pickDirectoryPathAndroid() async {
   return result;
 }
 
+/// Lists the files inside an already picked tree URI (recursively).
+/// Throws a [PlatformException] when the permission was revoked or the listing fails.
+Future<List<FileInfo>> listDirectoryAndroid(String uri) async {
+  final result = await _methodChannel.invokeMethod<List>('listDirectory', {'uri': uri});
+  if (result == null) {
+    return const [];
+  }
+
+  return result.map((e) => FileInfoMapper.fromJson((e as Map).cast<String, dynamic>())).toList();
+}
+
 Future<List<FileInfo>?> pickFilesAndroid() async {
   final result = await _methodChannel.invokeMethod<List>('pickFiles');
   if (result == null) {

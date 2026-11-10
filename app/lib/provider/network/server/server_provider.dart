@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/cross_file.dart';
@@ -10,8 +11,10 @@ import 'package:localsend_app/provider/network/server/controller/receive_control
 import 'package:localsend_app/provider/network/server/controller/send_controller.dart';
 import 'package:localsend_app/provider/network/server/server_utils.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/provider/shared_directory_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/util/native/shared_directory.dart';
 import 'package:localsend_app/util/native/web_pages_loader.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/isolate.dart';
@@ -89,6 +92,9 @@ class ServerService extends Notifier<ServerState?> {
 
   StreamSubscription<HttpServerEvent>? _subscription;
 
+  /// Whether the running server offers the configured shared directory (not manually selected files).
+  bool _sharedDirectoryShare = false;
+
   ServerService();
 
   @override
@@ -116,14 +122,33 @@ class ServerService extends Notifier<ServerState?> {
   ///
   /// On Android, receiving via link is the default: the upload page is served as well,
   /// so any device on the network can send files with a browser without installing LocalSend.
-  /// The regular app-to-app receiving keeps working in that mode.
+  /// When a shared directory is configured, its content is offered for download instead.
+  /// The regular app-to-app receiving keeps working in both modes.
   Future<ServerState?> startServerFromSettings() async {
     final settings = ref.read(settingsProvider);
+    WebShareState? web = defaultWebShareState(settings.receivePin);
+
+    if (checkPlatform([TargetPlatform.android])) {
+      final sharedDirectory = ref.read(sharedDirectoryProvider);
+      if (sharedDirectory != null) {
+        final files = await loadSharedDirectoryFiles(sharedDirectory);
+        if (files != null) {
+          final webDownloadState = await _sendController.buildWebDownloadState(files: files);
+          // The shared directory is meant for free downloads, so requests are always
+          // accepted while it is served as the default mode.
+          web = WebShareDownload(state: webDownloadState.copyWith(autoAccept: true), pin: settings.receivePin);
+          _sharedDirectoryShare = true;
+        } else {
+          _logger.warning('Could not read the shared directory $sharedDirectory. Serving the upload page instead.');
+        }
+      }
+    }
+
     return startServer(
       alias: settings.alias,
       port: settings.port,
       https: settings.https,
-      web: defaultWebShareState(settings.receivePin),
+      web: web,
     );
   }
 
@@ -140,6 +165,10 @@ class ServerService extends Notifier<ServerState?> {
     if (state != null) {
       _logger.info('Server already running.');
       return null;
+    }
+
+    if (web is! WebShareDownload) {
+      _sharedDirectoryShare = false;
     }
 
     alias = alias.trim();
@@ -299,19 +328,58 @@ class ServerService extends Notifier<ServerState?> {
 
   /// Restarts the server with web download (the download API) enabled for [files].
   /// The auto accept setting of a previous web download state is kept.
+  /// [sharedDirectory] marks the files as the content of the configured shared directory.
   Future<void> restartServerWithWebDownload({
     required String alias,
     required int port,
     required bool https,
     required List<CrossFile> files,
     String? pin,
+    bool sharedDirectory = false,
   }) async {
+    _sharedDirectoryShare = sharedDirectory;
     final webDownloadState = await _sendController.buildWebDownloadState(files: files);
     await restartServer(
       alias: alias,
       port: port,
       https: https,
       web: WebShareDownload(state: webDownloadState, pin: pin),
+    );
+  }
+
+  /// Re-reads the shared directory and restarts the server when its content changed,
+  /// so files added with the file manager show up without restarting the app.
+  Future<void> refreshSharedDirectoryShare() async {
+    final current = state;
+    final web = current?.web;
+    if (current == null || !_sharedDirectoryShare || web is! WebShareDownload) {
+      return;
+    }
+
+    final directory = ref.read(sharedDirectoryProvider);
+    if (directory == null) {
+      return;
+    }
+
+    final files = await loadSharedDirectoryFiles(directory);
+    if (files == null) {
+      return;
+    }
+
+    final oldKeys = web.state.files.values.map((f) => '${f.file.fileName}|${f.file.size}').toList()..sort();
+    final newKeys = files.map((f) => '${f.name}|${f.size}').toList()..sort();
+    if (const ListEquality().equals(oldKeys, newKeys)) {
+      return;
+    }
+
+    _logger.info('The shared directory content changed. Restarting the server.');
+    await restartServerWithWebDownload(
+      alias: current.alias,
+      port: current.port,
+      https: current.https,
+      files: files,
+      pin: web.pin,
+      sharedDirectory: true,
     );
   }
 

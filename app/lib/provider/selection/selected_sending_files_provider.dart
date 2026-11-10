@@ -9,7 +9,6 @@ import 'package:localsend_app/util/native/cross_file_converters.dart';
 import 'package:localsend_app/util/send_ignore.dart';
 import 'package:localsend_isolates/model/file_type.dart';
 import 'package:localsend_isolates/rust/api/metadata.dart';
-import 'package:localsend_isolates/util/content_uri_helper.dart';
 import 'package:localsend_isolates/util/file_path_helper.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
@@ -211,46 +210,15 @@ class AddAndroidDirectoryAction extends AsyncReduxAction<SelectedSendingFilesNot
 
   @override
   Future<List<CrossFile>> reduce() async {
-    final newFiles = <CrossFile>[];
     _logger.info('Reading files in ${result.directoryUri}');
-
-    final basePath = ContentUriHelper.getPathFromTreeUri(result.directoryUri);
-    if (basePath == null) {
-      _logger.warning('Could not get base path from ${result.directoryUri}');
-      return state;
-    }
-    final folderName = ContentUriHelper.getEntityNameFromPath(basePath);
-    if (folderName == null) {
-      _logger.warning('Could not get folder name from $basePath');
+    final converted = CrossFileConverters.convertAndroidDirectory(result);
+    if (converted == null) {
       return state;
     }
 
-    for (final file in result.files) {
-      final relative = ContentUriHelper.guessRelativePathFromPickedFileContentUri(
-        folderContentUri: result.directoryUri,
-        basePath: basePath,
-        folderName: folderName,
-        uri: file.uri,
-      );
-      if (relative == null) {
-        _logger.warning('Could not get relative path from ${file.uri}');
-        continue;
-      }
-      _logger.info('Add file $relative (${file.uri})');
-
-      final crossFile = CrossFile(
-        name: relative,
-        fileType: file.name.guessFileType(),
-        size: file.size,
-        thumbnail: null,
-        asset: null,
-        path: file.uri,
-        bytes: null,
-        // SAF only provides milliseconds, so there is no point statting in Rust.
-        lastModified: file.lastModified,
-        lastAccessed: null,
-      );
-
+    final newFiles = <CrossFile>[];
+    for (final crossFile in converted) {
+      _logger.info('Add file ${crossFile.name} (${crossFile.path})');
       final isAlreadySelect = state.any((element) => element.isSameFile(otherFile: crossFile));
       if (!isAlreadySelect) {
         newFiles.add(crossFile);

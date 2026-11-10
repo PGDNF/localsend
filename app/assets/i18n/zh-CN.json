@@ -124,6 +124,12 @@
       "saveToHistory": "保存到历史记录",
       "verifyChecksums": "接收文件时验证校验和"
     },
+    "sharedDirectory": {
+      "title": "共享目录",
+      "folder": "目录",
+      "notSet": "未设置",
+      "hint": "任何打开链接的人都可以下载此目录中的文件。你可以使用文件管理器向目录中自由放置文件。点击按钮可清除已设置的目录。"
+    },
     "send": {
       "title": "发送",
       "shareViaLinkAutoAccept": "通过链接分享：自动同意接收请求",
