@@ -64,7 +64,7 @@
             box-sizing: border-box;
             width: 100%;
             max-width: 760px;
-            margin: 0 auto 0.8em;
+            margin: 0 auto 0.4em;
             padding: 0.6em 1em;
             text-align: center;
             background-color: rgba(243, 248, 246, 0.92);
@@ -149,6 +149,74 @@
             text-align: left;
         }
 
+        .group-header {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.5em 1em 0.45em;
+            margin: 1.1em 0 0.55em;
+            border-bottom: 1px solid #DCE8E4;
+        }
+
+        .group-header:first-child {
+            margin-top: 0.3em;
+        }
+
+        body.select-mode .group-header {
+            cursor: pointer;
+        }
+
+        .group-check, .group-title-cell {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .group-check {
+            display: none;
+            width: 2.2em;
+            text-align: center;
+        }
+
+        body.select-mode .group-check {
+            display: table-cell;
+        }
+
+        .group-title-cell {
+            width: auto;
+        }
+
+        .group-badge {
+            font-size: 0.72em;
+            padding: 0.3em 0.7em;
+            max-width: 12em;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+
+        .group-count {
+            display: inline-block;
+            margin-left: 0.6em;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #6C817C;
+            vertical-align: middle;
+        }
+
+        .group-header.group-all .check-box {
+            background-color: #00796B;
+            border-color: #00796B;
+            color: #FFFFFF;
+        }
+
+        .group-header.group-partial .check-box {
+            background-color: #FFFFFF;
+            border-color: #00796B;
+            color: #00796B;
+        }
+
         .file-item {
             display: table;
             table-layout: fixed;
@@ -216,6 +284,22 @@
             text-align: center;
         }
 
+        .file-icon svg {
+            display: inline-block;
+            width: 1.5em;
+            height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .cat-image { color: #2E7D4F; }
+        .cat-video { color: #6A4FB3; }
+        .cat-audio { color: #B26A00; }
+        .cat-pdf   { color: #C0392B; }
+        .cat-text  { color: #2C6EAF; }
+        .cat-apk   { color: #00796B; }
+        .cat-archive { color: #5B6B73; }
+        .cat-other { color: #5B6B73; }
+
         .ext-badge {
             display: inline-block;
             box-sizing: border-box;
@@ -230,9 +314,11 @@
 
         .ext-image { background-color: #E3F2E9; color: #2E7D4F; }
         .ext-video { background-color: #ECE7F6; color: #6A4FB3; }
+        .ext-audio { background-color: #FBF0DC; color: #B26A00; }
         .ext-pdf   { background-color: #FBE7E7; color: #C0392B; }
         .ext-text  { background-color: #E4EEF9; color: #2C6EAF; }
         .ext-apk   { background-color: #E0F0EF; color: #00796B; }
+        .ext-archive { background-color: #ECEFF1; color: #5B6B73; }
         .ext-other { background-color: #ECEFF1; color: #5B6B73; }
 
         .file-name-cell {
@@ -248,6 +334,21 @@
             white-space: nowrap;
             text-align: right;
             color: #6C817C;
+        }
+
+        @keyframes ls-rise {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .file-item, .group-header {
+            animation: ls-rise 0.3s ease backwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .file-item, .group-header {
+                animation: none;
+            }
         }
 
         ::-webkit-scrollbar {
@@ -286,6 +387,20 @@
 
     var BASE_URL = '/api/localsend/v2';
 
+    var FILE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>';
+
+    // Maps a file extension to a colour category. The grouping key is the exact
+    // extension; the category only drives the badge / icon colour.
+    var EXT_CAT = {
+        jpg: 'image', jpeg: 'image', png: 'image', gif: 'image', bmp: 'image', webp: 'image', svg: 'image', heic: 'image', heif: 'image', avif: 'image', tif: 'image', tiff: 'image', ico: 'image', raw: 'image',
+        mp4: 'video', mkv: 'video', avi: 'video', mov: 'video', webm: 'video', flv: 'video', wmv: 'video', m4v: 'video', mpg: 'video', mpeg: 'video', '3gp': 'video', ts: 'video', m2ts: 'video',
+        mp3: 'audio', flac: 'audio', wav: 'audio', aac: 'audio', ogg: 'audio', m4a: 'audio', wma: 'audio', opus: 'audio', ape: 'audio', alac: 'audio', aiff: 'audio', mid: 'audio', midi: 'audio', amr: 'audio',
+        pdf: 'pdf',
+        txt: 'text', md: 'text', log: 'text', csv: 'text', json: 'text', xml: 'text', yaml: 'text', yml: 'text', ini: 'text', conf: 'text', cfg: 'text', srt: 'text', ass: 'text', vtt: 'text', html: 'text', htm: 'text', css: 'text', js: 'text', ts: 'text', dart: 'text', py: 'text', java: 'text', c: 'text', cpp: 'text', h: 'text', hpp: 'text', rs: 'text', go: 'text', sh: 'text', bat: 'text', ps1: 'text', sql: 'text',
+        apk: 'apk',
+        zip: 'archive', rar: 'archive', '7z': 'archive', tar: 'archive', gz: 'archive', bz2: 'archive', xz: 'archive', tgz: 'archive', iso: 'archive', dmg: 'archive'
+    };
+
     var i18n = {};
     var sessionId = sessionStorage.getItem('sessionId');
     var queryParams = location.search.slice(1).split('&');
@@ -300,11 +415,16 @@
       }
     }
 
-    // Display state: a flat list of every file plus an optional selection mode.
+    // Display state: every file is grouped by its extension. Selection mode
+    // works across all groups; a group header toggles its whole group.
     var allFiles = [];
     var selectMode = false;
     var rowEls = [];
     var boxEls = [];
+    var groups = {};
+    var groupOrder = [];
+    var groupHeadEls = {};
+    var groupBoxEls = {};
 
     function firstRequestFiles() {
       document.getElementById('status-text').innerText = i18n.waiting;
@@ -424,11 +544,12 @@
       allFiles = [];
       for (var i = 0; i < fileKeys.length; i++) {
         var file = files[fileKeys[i]];
+        var baseName = baseNameOf(file.fileName);
         allFiles.push({
           id: fileKeys[i],
-          name: file.fileName,
+          name: baseName,
           size: file.size,
-          type: file.fileType,
+          ext: fileExt(baseName),
           url: fileUrl(sessionId, fileKeys[i]),
           selected: false
         });
@@ -436,6 +557,7 @@
 
       selectMode = false;
       document.body.className = '';
+      buildGroups();
       renderList();
 
       // A single file is just clicked to download; selection only matters for several.
@@ -446,18 +568,58 @@
       }
     }
 
+    function buildGroups() {
+      groups = {};
+      for (var i = 0; i < allFiles.length; i++) {
+        var ext = allFiles[i].ext;
+        if (!groups[ext]) {
+          groups[ext] = [];
+        }
+        groups[ext].push(i);
+      }
+      groupOrder = getKeys(groups).sort();
+      for (var g = 0; g < groupOrder.length; g++) {
+        groups[groupOrder[g]].sort(function (a, b) {
+          var na = allFiles[a].name.toLowerCase();
+          var nb = allFiles[b].name.toLowerCase();
+          return na < nb ? -1 : (na > nb ? 1 : 0);
+        });
+      }
+    }
+
+    function rowHtml(i, delay) {
+      var f = allFiles[i];
+      var cat = extCategory(f.ext);
+      return '<a class="file-item" id="file-row-' + i + '" href="' + f.url + '" style="animation-delay:' + delay.toFixed(2) + 's">' +
+          '<span class="file-check"><span class="check-box" id="file-box-' + i + '"></span></span>' +
+          '<span class="file-icon cat-' + cat + '">' + FILE_ICON + '</span>' +
+          '<span class="file-name-cell">' + escapeHtml(f.name) + '</span>' +
+          '<span class="file-size-cell">' + formatBytes(f.size) + '</span>' +
+          '</a>';
+    }
+
     function renderList() {
       var html = '';
-      for (var i = 0; i < allFiles.length; i++) {
-        var f = allFiles[i];
-        var group = fileGroup(f.type);
-        var ext = fileExt(f.name);
-        html += '<a class="file-item" id="file-row-' + i + '" href="' + f.url + '">' +
-            '<span class="file-check"><span class="check-box" id="file-box-' + i + '"></span></span>' +
-            '<span class="file-icon"><span class="ext-badge ext-' + group + '">' + escapeHtml(ext) + '</span></span>' +
-            '<span class="file-name-cell">' + escapeHtml(f.name) + '</span>' +
-            '<span class="file-size-cell">' + formatBytes(f.size) + '</span>' +
-            '</a>';
+      var delay = 0;
+      if (allFiles.length === 1) {
+        html = rowHtml(0, delay);
+      } else {
+        for (var g = 0; g < groupOrder.length; g++) {
+          var ext = groupOrder[g];
+          var idxs = groups[ext];
+          var cat = extCategory(ext);
+          html += '<div class="group-header" id="group-head-' + g + '" style="animation-delay:' + delay.toFixed(2) + 's">' +
+              '<span class="group-check"><span class="check-box" id="group-box-' + g + '"></span></span>' +
+              '<span class="group-title-cell">' +
+              '<span class="ext-badge ext-' + cat + ' group-badge">' + escapeHtml(ext) + '</span>' +
+              '<span class="group-count">' + idxs.length + '</span>' +
+              '</span></div>';
+          delay = Math.min(delay + 0.03, 0.3);
+          for (var k = 0; k < idxs.length; k++) {
+            html += rowHtml(idxs[k], delay);
+            delay = Math.min(delay + 0.03, 0.3);
+          }
+        }
       }
       document.getElementById('file-list').innerHTML = html;
 
@@ -476,6 +638,23 @@
             // Browse mode: follow the link, which the server serves as an attachment.
           };
         })(j);
+      }
+
+      groupHeadEls = {};
+      groupBoxEls = {};
+      if (allFiles.length > 1) {
+        for (var h = 0; h < groupOrder.length; h++) {
+          (function (ext, gi) {
+            var head = document.getElementById('group-head-' + gi);
+            groupHeadEls[ext] = head;
+            groupBoxEls[ext] = document.getElementById('group-box-' + gi);
+            head.onclick = function () {
+              if (selectMode) {
+                toggleGroup(ext);
+              }
+            };
+          })(groupOrder[h], h);
+        }
       }
     }
 
@@ -510,9 +689,58 @@
       boxEls[idx].innerHTML = f.selected ? '✓' : '';
     }
 
+    function updateGroupVisual(ext) {
+      var head = groupHeadEls[ext];
+      if (!head) {
+        return;
+      }
+      var idxs = groups[ext];
+      var sel = 0;
+      for (var k = 0; k < idxs.length; k++) {
+        if (allFiles[idxs[k]].selected) {
+          sel++;
+        }
+      }
+      var cls = 'group-header';
+      if (sel > 0 && sel === idxs.length) {
+        cls += ' group-all';
+        groupBoxEls[ext].innerHTML = '✓';
+      } else if (sel > 0) {
+        cls += ' group-partial';
+        groupBoxEls[ext].innerHTML = '–';
+      } else {
+        groupBoxEls[ext].innerHTML = '';
+      }
+      head.className = cls;
+    }
+
+    function refreshGroupVisuals() {
+      for (var g = 0; g < groupOrder.length; g++) {
+        updateGroupVisual(groupOrder[g]);
+      }
+    }
+
     function toggleRow(idx) {
       allFiles[idx].selected = !allFiles[idx].selected;
       updateRowVisual(idx);
+      updateGroupVisual(allFiles[idx].ext);
+      renderToolbar();
+    }
+
+    function toggleGroup(ext) {
+      var idxs = groups[ext];
+      var sel = 0;
+      for (var k = 0; k < idxs.length; k++) {
+        if (allFiles[idxs[k]].selected) {
+          sel++;
+        }
+      }
+      var target = sel !== idxs.length;
+      for (var j = 0; j < idxs.length; j++) {
+        allFiles[idxs[j]].selected = target;
+        updateRowVisual(idxs[j]);
+      }
+      updateGroupVisual(ext);
       renderToolbar();
     }
 
@@ -530,6 +758,7 @@
       selectMode = true;
       document.body.className = 'select-mode';
       renderToolbar();
+      refreshGroupVisuals();
     }
 
     function cancelSelect() {
@@ -540,6 +769,7 @@
         updateRowVisual(i);
       }
       renderToolbar();
+      refreshGroupVisuals();
     }
 
     function toggleAll() {
@@ -549,6 +779,7 @@
         updateRowVisual(i);
       }
       renderToolbar();
+      refreshGroupVisuals();
     }
 
     function downloadAll() {
@@ -584,25 +815,16 @@
       }
     }
 
-    function fileGroup(fileType) {
-      // The sender transmits the type as MIME type (or as legacy enum name).
-      var type = fileType || '';
-      if (type.indexOf('image/') === 0 || type === 'image') {
-        return 'image';
-      }
-      if (type.indexOf('video/') === 0 || type === 'video') {
-        return 'video';
-      }
-      if (type === 'application/pdf' || type === 'pdf') {
-        return 'pdf';
-      }
-      if (type.indexOf('text/') === 0 || type === 'text') {
-        return 'text';
-      }
-      if (type === 'application/vnd.android.package-archive' || type === 'apk') {
-        return 'apk';
-      }
-      return 'other';
+    function extCategory(ext) {
+      return EXT_CAT[String(ext).toLowerCase()] || 'other';
+    }
+
+    function baseNameOf(name) {
+      var s = String(name === null || name === undefined ? '' : name);
+      var slash = s.lastIndexOf('/');
+      var back = s.lastIndexOf('\\');
+      var cut = slash > back ? slash : back;
+      return cut >= 0 ? s.substring(cut + 1) : s;
     }
 
     function fileExt(name) {
@@ -610,11 +832,7 @@
       if (idx <= 0 || idx === name.length - 1) {
         return 'FILE';
       }
-      var ext = name.substring(idx + 1).toUpperCase();
-      if (ext.length > 4) {
-        ext = ext.substring(0, 4);
-      }
-      return ext;
+      return name.substring(idx + 1).toUpperCase();
     }
 
     function t(key) {

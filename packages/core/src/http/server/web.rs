@@ -447,9 +447,14 @@ pub(crate) async fn download(
     let size = file.size;
     let body = file_content_body(content);
 
-    // The file name may be inside directories.
-    let file_name = file.file_name.replace('/', "-");
-    let encoded_file_name = utf8_percent_encode(&file_name, FILE_NAME_ENCODE_SET);
+    // The file name may include directories; only the base name is saved,
+    // so a shared "Music/song.flac" downloads as "song.flac", not "Music-song.flac".
+    let base_name = file
+        .file_name
+        .rsplit(|c| c == '/' || c == '\\')
+        .find(|segment| !segment.is_empty())
+        .unwrap_or(file.file_name.as_str());
+    let encoded_file_name = utf8_percent_encode(base_name, FILE_NAME_ENCODE_SET);
 
     let mut response = Response::new(body);
     let headers = response.headers_mut();
