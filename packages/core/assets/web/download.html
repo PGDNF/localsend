@@ -6,89 +6,265 @@
     <title>LocalSend</title>
     <style>
         body {
-            font-family: sans-serif, system-ui;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
             margin: 0;
             line-height: 1.5;
-            text-align: center;
+            color: #16302B;
+            background-color: #F3F8F6;
+            background-image: radial-gradient(circle at 50% -10%, #FFFFFF 0%, #EAF4F1 55%, #F3F8F6 100%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
         }
 
         a {
             text-decoration: none;
+            color: inherit;
+        }
+
+        #brand {
+            padding: 1.4em 1em 0.4em;
+            text-align: center;
+        }
+
+        #brand-mark {
+            display: inline-block;
+            vertical-align: middle;
+            width: 1.5em;
+            height: 1.5em;
+            margin-right: 0.35em;
+            color: #00796B;
+        }
+
+        #brand-mark svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #brand-name {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 2em;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #0B4F47;
+        }
+
+        #status-text {
+            text-align: center;
+            color: #6C817C;
+            margin: 0.2em 0 0.8em;
+            font-size: 0.95em;
+        }
+
+        #toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto 0.8em;
+            padding: 0.6em 1em;
+            text-align: center;
+            background-color: rgba(243, 248, 246, 0.92);
+            border-bottom: 1px solid #DCE8E4;
+        }
+
+        @supports (backdrop-filter: blur(6px)) {
+            #toolbar {
+                background-color: rgba(243, 248, 246, 0.7);
+                backdrop-filter: blur(6px);
+            }
+        }
+
+        .btn {
+            display: inline-block;
+            box-sizing: border-box;
+            margin: 0.25em;
+            padding: 0.55em 1.3em;
+            font-family: inherit;
+            font-size: 0.95em;
+            font-weight: 600;
+            line-height: 1.2;
+            border-radius: 999px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background-color: #00796B;
             color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: #00695C;
+        }
+
+        .btn-secondary {
+            background-color: #FFFFFF;
+            color: #00796B;
+            border-color: #00796B;
+        }
+
+        .btn-secondary:hover {
+            background-color: #E0F2F1;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: #6C817C;
+        }
+
+        .btn-ghost:hover {
+            color: #16302B;
+            background-color: #E7EFEC;
+        }
+
+        .btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .sel-count {
+            display: inline-block;
+            margin: 0.25em 0.6em;
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #0B4F47;
+            vertical-align: middle;
         }
 
         #file-list {
             box-sizing: border-box;
             width: 100%;
-            max-width: 1000px;
-            padding: 0 1em;
+            max-width: 760px;
+            padding: 0 1em 2em;
             margin: 0 auto;
             text-align: left;
-            overflow: hidden;
-        }
-
-        .file-group-title {
-            clear: both;
-            font-weight: bold;
-            padding: 0.5em 0;
-            color: #424242;
         }
 
         .file-item {
             display: table;
+            table-layout: fixed;
             width: 100%;
-            padding: 0.5em 1em;
-            background-color: #00796B;
-            border-radius: 0.5em;
-            margin-bottom: 1em;
-            float: left;
             box-sizing: border-box;
+            padding: 0.7em 1em;
+            margin-bottom: 0.6em;
+            background-color: #FFFFFF;
+            border: 1px solid #DCE8E4;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(11, 79, 71, 0.05);
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
         }
 
         .file-item:hover {
-            background-color: #009688;
+            border-color: #00796B;
+            box-shadow: 0 4px 12px rgba(11, 79, 71, 0.12);
+            transform: translateY(-1px);
         }
 
-        .file-name-cell, .file-size-cell {
+        .file-item.selected {
+            background-color: #DCEFEB;
+            border-color: #00796B;
+        }
+
+        .file-check, .file-icon, .file-name-cell, .file-size-cell {
             display: table-cell;
             vertical-align: middle;
         }
 
+        .file-check {
+            display: none;
+            width: 2.2em;
+            text-align: center;
+        }
+
+        body.select-mode .file-check {
+            display: table-cell;
+        }
+
+        .check-box {
+            display: inline-block;
+            box-sizing: border-box;
+            width: 1.4em;
+            height: 1.4em;
+            line-height: 1.3em;
+            text-align: center;
+            font-size: 0.95em;
+            font-weight: 700;
+            color: #FFFFFF;
+            border: 2px solid #B6C7C2;
+            border-radius: 6px;
+            background-color: #FFFFFF;
+            vertical-align: middle;
+        }
+
+        .file-item.selected .check-box {
+            background-color: #00796B;
+            border-color: #00796B;
+        }
+
+        .file-icon {
+            width: 3.2em;
+            text-align: center;
+        }
+
+        .ext-badge {
+            display: inline-block;
+            box-sizing: border-box;
+            min-width: 2.6em;
+            padding: 0.25em 0.35em;
+            font-size: 0.62em;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-align: center;
+            border-radius: 6px;
+        }
+
+        .ext-image { background-color: #E3F2E9; color: #2E7D4F; }
+        .ext-video { background-color: #ECE7F6; color: #6A4FB3; }
+        .ext-pdf   { background-color: #FBE7E7; color: #C0392B; }
+        .ext-text  { background-color: #E4EEF9; color: #2C6EAF; }
+        .ext-apk   { background-color: #E0F0EF; color: #00796B; }
+        .ext-other { background-color: #ECEFF1; color: #5B6B73; }
+
         .file-name-cell {
-            width: 100%;
-            padding: 0 0.5em;
+            width: auto;
+            padding: 0 0.7em;
+            font-weight: 600;
+            word-break: break-all;
         }
 
         .file-size-cell {
+            width: 5.5em;
             font-size: 0.8em;
             white-space: nowrap;
-            color: #E0E0E0;
+            text-align: right;
+            color: #6C817C;
         }
 
-        /* Two columns layout */
-        .file-item {
-            width: 100%;
+        ::-webkit-scrollbar {
+            width: 10px;
         }
 
-        @media screen and (min-width: 768px) {
-            #file-list.file-item {
-                width: 48%;
-                margin-right: 2%;
-            }
-            #file-list.file-item:nth-child(2n) {
-                margin-right: 0;
-            }
+        ::-webkit-scrollbar-track {
+            background: #EAF4F1;
         }
 
-        /* Single file mode */
+        ::-webkit-scrollbar-thumb {
+            background: #B6C7C2;
+            border-radius: 999px;
+        }
 
-        #single-file {
-            box-sizing: border-box;
-            width: 100%;
-            text-align: left;
-            max-width: 400px;
-            padding: 0 1em;
-            margin: 0 auto;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00796B;
         }
     </style>
 </head>
@@ -97,10 +273,13 @@
     LocalSend requires JavaScript, which is currently disabled. Please enable it and try again.
 </noscript>
 
-<h1 style="padding: 0.5em">LocalSend</h1>
+<div id="brand">
+    <span id="brand-mark"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></span>
+    <span id="brand-name">LocalSend</span>
+</div>
 <p id="status-text"></p>
+<div id="toolbar"></div>
 <div id="file-list"></div>
-<div id="single-file"></div>
 
 <script>
     // IMPORTANT: This script works in Internet Explorer 8!
@@ -120,6 +299,12 @@
         break;
       }
     }
+
+    // Display state: a flat list of every file plus an optional selection mode.
+    var allFiles = [];
+    var selectMode = false;
+    var rowEls = [];
+    var boxEls = [];
 
     function firstRequestFiles() {
       document.getElementById('status-text').innerText = i18n.waiting;
@@ -236,64 +421,166 @@
 
     function handleFilesDisplay(files, sessionId) {
       var fileKeys = getKeys(files);
-      var urls = [];
-      var items = [];
+      allFiles = [];
       for (var i = 0; i < fileKeys.length; i++) {
         var file = files[fileKeys[i]];
-        var url = fileUrl(sessionId, fileKeys[i]);
-        urls.push(url);
-        items.push({
-          group: fileGroup(file.fileType),
-          html: '<a class="file-item" href="' + url + '">' +
-              '<div class="file-name-cell">' + escapeHtml(file.fileName) + '</div>' +
-              '<div class="file-size-cell">' + formatBytes(file.size) + '</div>' +
-              '</a>'
+        allFiles.push({
+          id: fileKeys[i],
+          name: file.fileName,
+          size: file.size,
+          type: file.fileType,
+          url: fileUrl(sessionId, fileKeys[i]),
+          selected: false
         });
       }
 
-      if (fileKeys.length === 1) {
-        // A single file is downloaded only after clicking it.
-        document.getElementById('single-file').innerHTML = items[0].html;
+      selectMode = false;
+      document.body.className = '';
+      renderList();
+
+      // A single file is just clicked to download; selection only matters for several.
+      if (allFiles.length > 1) {
+        renderToolbar();
+      } else {
+        document.getElementById('toolbar').innerHTML = '';
+      }
+    }
+
+    function renderList() {
+      var html = '';
+      for (var i = 0; i < allFiles.length; i++) {
+        var f = allFiles[i];
+        var group = fileGroup(f.type);
+        var ext = fileExt(f.name);
+        html += '<a class="file-item" id="file-row-' + i + '" href="' + f.url + '">' +
+            '<span class="file-check"><span class="check-box" id="file-box-' + i + '"></span></span>' +
+            '<span class="file-icon"><span class="ext-badge ext-' + group + '">' + escapeHtml(ext) + '</span></span>' +
+            '<span class="file-name-cell">' + escapeHtml(f.name) + '</span>' +
+            '<span class="file-size-cell">' + formatBytes(f.size) + '</span>' +
+            '</a>';
+      }
+      document.getElementById('file-list').innerHTML = html;
+
+      rowEls = [];
+      boxEls = [];
+      for (var j = 0; j < allFiles.length; j++) {
+        (function (idx) {
+          var row = document.getElementById('file-row-' + idx);
+          rowEls[idx] = row;
+          boxEls[idx] = document.getElementById('file-box-' + idx);
+          row.onclick = function () {
+            if (selectMode) {
+              toggleRow(idx);
+              return false;
+            }
+            // Browse mode: follow the link, which the server serves as an attachment.
+          };
+        })(j);
+      }
+    }
+
+    function renderToolbar() {
+      var bar = document.getElementById('toolbar');
+      if (!selectMode) {
+        bar.innerHTML =
+            '<button type="button" id="btn-select" class="btn btn-secondary">' + escapeHtml(t('select')) + '</button>' +
+            '<button type="button" id="btn-all" class="btn btn-primary">' + escapeHtml(t('downloadAll')) + '</button>';
+        document.getElementById('btn-select').onclick = enterSelect;
+        document.getElementById('btn-all').onclick = downloadAll;
         return;
       }
 
-      var html = '';
-      if (fileKeys.length > 1) {
-        html += '<a id="download-all" href="javascript:void(0)" style="display:inline-block;padding:0.5em 1.5em;background-color:#00796B;border-radius:0.5em;margin-bottom:1em;">' +
-            escapeHtml(downloadAllText()) + '</a>';
-      }
+      var count = selectedCount();
+      var allSelected = count === allFiles.length;
+      bar.innerHTML =
+          '<button type="button" id="btn-toggle-all" class="btn btn-secondary">' + escapeHtml(allSelected ? t('deselectAll') : t('selectAll')) + '</button>' +
+          '<span class="sel-count">' + count + ' / ' + allFiles.length + '</span>' +
+          '<button type="button" id="btn-download-sel" class="btn btn-primary"' + (count === 0 ? ' disabled' : '') + '>' + escapeHtml(t('downloadSelected')) + ' (' + count + ')</button>' +
+          '<button type="button" id="btn-cancel" class="btn btn-ghost">' + escapeHtml(t('cancel')) + '</button>';
+      document.getElementById('btn-toggle-all').onclick = toggleAll;
+      document.getElementById('btn-cancel').onclick = cancelSelect;
+      var dl = document.getElementById('btn-download-sel');
+      dl.disabled = count === 0;
+      dl.onclick = downloadSelected;
+    }
 
-      // Group the files by type instead of showing one mixed list.
-      var groups = ['image', 'video', 'pdf', 'text', 'apk', 'other'];
-      for (var g = 0; g < groups.length; g++) {
-        var groupHtml = '';
-        var count = 0;
-        for (var k = 0; k < items.length; k++) {
-          if (items[k].group === groups[g]) {
-            count++;
-            groupHtml += items[k].html;
-          }
+    function updateRowVisual(idx) {
+      var f = allFiles[idx];
+      rowEls[idx].className = f.selected ? 'file-item selected' : 'file-item';
+      boxEls[idx].innerHTML = f.selected ? '✓' : '';
+    }
+
+    function toggleRow(idx) {
+      allFiles[idx].selected = !allFiles[idx].selected;
+      updateRowVisual(idx);
+      renderToolbar();
+    }
+
+    function selectedCount() {
+      var count = 0;
+      for (var i = 0; i < allFiles.length; i++) {
+        if (allFiles[i].selected) {
+          count++;
         }
-        if (count > 0) {
-          html += '<div class="file-group-title">' + escapeHtml(groupText(groups[g])) + ' (' + count + ')</div>' + groupHtml;
+      }
+      return count;
+    }
+
+    function enterSelect() {
+      selectMode = true;
+      document.body.className = 'select-mode';
+      renderToolbar();
+    }
+
+    function cancelSelect() {
+      selectMode = false;
+      document.body.className = '';
+      for (var i = 0; i < allFiles.length; i++) {
+        allFiles[i].selected = false;
+        updateRowVisual(i);
+      }
+      renderToolbar();
+    }
+
+    function toggleAll() {
+      var target = selectedCount() !== allFiles.length;
+      for (var i = 0; i < allFiles.length; i++) {
+        allFiles[i].selected = target;
+        updateRowVisual(i);
+      }
+      renderToolbar();
+    }
+
+    function downloadAll() {
+      var urls = [];
+      for (var i = 0; i < allFiles.length; i++) {
+        urls.push(allFiles[i].url);
+      }
+      downloadUrls(urls);
+    }
+
+    function downloadSelected() {
+      var urls = [];
+      for (var i = 0; i < allFiles.length; i++) {
+        if (allFiles[i].selected) {
+          urls.push(allFiles[i].url);
         }
       }
+      downloadUrls(urls);
+    }
 
-      document.getElementById('file-list').innerHTML = html;
-
-      var downloadAll = document.getElementById('download-all');
-      if (downloadAll) {
-        downloadAll.onclick = function () {
-          // One download per second: browsers may ask for permission to
-          // download multiple files, and the sender resolves each file lazily.
-          for (var j = 0; j < urls.length; j++) {
-            (function (url, delay) {
-              setTimeout(function () {
-                triggerDownload(url);
-              }, delay);
-            })(urls[j], j * 1000);
-          }
-        };
+    function downloadUrls(urls) {
+      if (!urls.length) {
+        return;
+      }
+      // One download per second: browsers may ask for permission to
+      // download multiple files, and the sender resolves each file lazily.
+      for (var j = 0; j < urls.length; j++) {
+        (function (url, delay) {
+          setTimeout(function () {
+            triggerDownload(url);
+          }, delay);
+        })(urls[j], j * 1000);
       }
     }
 
@@ -318,39 +605,44 @@
       return 'other';
     }
 
-    function groupText(group) {
-      var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-      // Labels in the order of the groups array above.
-      var translations = {
-        'en': ['Images', 'Videos', 'PDF', 'Text', 'Apps', 'Other'],
-        'zh': ['图片', '视频', 'PDF 文档', '文本', '应用', '其他'],
-        'zh-tw': ['圖片', '影片', 'PDF 文件', '文字', '應用程式', '其他'],
-        'zh-hk': ['圖片', '視頻', 'PDF 文件', '文字', '應用程式', '其他'],
-        'ja': ['画像', '動画', 'PDF', 'テキスト', 'アプリ', 'その他'],
-        'ko': ['이미지', '동영상', 'PDF', '텍스트', '앱', '기타'],
-        'de': ['Bilder', 'Videos', 'PDF', 'Text', 'Apps', 'Sonstige'],
-        'fr': ['Images', 'Vidéos', 'PDF', 'Texte', 'Applications', 'Autres'],
-        'es': ['Imágenes', 'Vídeos', 'PDF', 'Texto', 'Aplicaciones', 'Otros'],
-        'it': ['Immagini', 'Video', 'PDF', 'Testo', 'App', 'Altro'],
-        'pt': ['Imagens', 'Vídeos', 'PDF', 'Texto', 'Aplicativos', 'Outros'],
-        'ru': ['Изображения', 'Видео', 'PDF', 'Текст', 'Приложения', 'Другое'],
-        'uk': ['Зображення', 'Відео', 'PDF', 'Текст', 'Додатки', 'Інше'],
-        'pl': ['Obrazy', 'Filmy', 'PDF', 'Tekst', 'Aplikacje', 'Inne'],
-        'tr': ['Resimler', 'Videolar', 'PDF', 'Metin', 'Uygulamalar', 'Diğer'],
-        'ar': ['صور', 'فيديو', 'PDF', 'نصوص', 'تطبيقات', 'أخرى'],
-        'vi': ['Hình ảnh', 'Video', 'PDF', 'Văn bản', 'Ứng dụng', 'Khác'],
-        'id': ['Gambar', 'Video', 'PDF', 'Teks', 'Aplikasi', 'Lainnya'],
-        'th': ['รูปภาพ', 'วิดีโอ', 'PDF', 'ข้อความ', 'แอป', 'อื่นๆ'],
-        'hi': ['चित्र', 'वीडियो', 'PDF', 'टेक्स्ट', 'ऐप', 'अन्य']
-      };
-      var labels = translations[lang] || translations[lang.split('-')[0]] || translations['en'];
-      var groups = ['image', 'video', 'pdf', 'text', 'apk', 'other'];
-      for (var i = 0; i < groups.length; i++) {
-        if (groups[i] === group) {
-          return labels[i];
-        }
+    function fileExt(name) {
+      var idx = name.lastIndexOf('.');
+      if (idx <= 0 || idx === name.length - 1) {
+        return 'FILE';
       }
-      return group;
+      var ext = name.substring(idx + 1).toUpperCase();
+      if (ext.length > 4) {
+        ext = ext.substring(0, 4);
+      }
+      return ext;
+    }
+
+    function t(key) {
+      var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+      var translations = {
+        'en': { select: 'Select', downloadAll: 'Download all', selectAll: 'Select all', deselectAll: 'Deselect all', downloadSelected: 'Download selected', cancel: 'Cancel' },
+        'zh': { select: '选择', downloadAll: '下载全部', selectAll: '全选', deselectAll: '取消全选', downloadSelected: '下载选中', cancel: '取消' },
+        'zh-tw': { select: '選擇', downloadAll: '下載全部', selectAll: '全選', deselectAll: '取消全選', downloadSelected: '下載選取', cancel: '取消' },
+        'zh-hk': { select: '選擇', downloadAll: '下載全部', selectAll: '全選', deselectAll: '取消全選', downloadSelected: '下載選取', cancel: '取消' },
+        'ja': { select: '選択', downloadAll: 'すべてダウンロード', selectAll: 'すべて選択', deselectAll: '選択解除', downloadSelected: '選択をダウンロード', cancel: 'キャンセル' },
+        'ko': { select: '선택', downloadAll: '모두 다운로드', selectAll: '모두 선택', deselectAll: '선택 해제', downloadSelected: '선택 다운로드', cancel: '취소' },
+        'de': { select: 'Auswählen', downloadAll: 'Alle herunterladen', selectAll: 'Alle auswählen', deselectAll: 'Auswahl aufheben', downloadSelected: 'Auswahl herunterladen', cancel: 'Abbrechen' },
+        'fr': { select: 'Sélectionner', downloadAll: 'Tout télécharger', selectAll: 'Tout sélectionner', deselectAll: 'Tout désélectionner', downloadSelected: 'Télécharger la sélection', cancel: 'Annuler' },
+        'es': { select: 'Seleccionar', downloadAll: 'Descargar todo', selectAll: 'Seleccionar todo', deselectAll: 'Deseleccionar todo', downloadSelected: 'Descargar selección', cancel: 'Cancelar' },
+        'it': { select: 'Seleziona', downloadAll: 'Scarica tutto', selectAll: 'Seleziona tutto', deselectAll: 'Deseleziona tutto', downloadSelected: 'Scarica selezione', cancel: 'Annulla' },
+        'pt': { select: 'Selecionar', downloadAll: 'Baixar tudo', selectAll: 'Selecionar tudo', deselectAll: 'Desmarcar tudo', downloadSelected: 'Baixar seleção', cancel: 'Cancelar' },
+        'ru': { select: 'Выбрать', downloadAll: 'Скачать всё', selectAll: 'Выбрать всё', deselectAll: 'Снять выбор', downloadSelected: 'Скачать выбранное', cancel: 'Отмена' },
+        'uk': { select: 'Вибрати', downloadAll: 'Завантажити все', selectAll: 'Вибрати все', deselectAll: 'Зняти вибір', downloadSelected: 'Завантажити вибране', cancel: 'Скасувати' },
+        'pl': { select: 'Wybierz', downloadAll: 'Pobierz wszystko', selectAll: 'Zaznacz wszystko', deselectAll: 'Odznacz wszystko', downloadSelected: 'Pobierz zaznaczone', cancel: 'Anuluj' },
+        'tr': { select: 'Seç', downloadAll: 'Tümünü indir', selectAll: 'Tümünü seç', deselectAll: 'Seçimi kaldır', downloadSelected: 'Seçilenleri indir', cancel: 'İptal' },
+        'ar': { select: 'تحديد', downloadAll: 'تنزيل الكل', selectAll: 'تحديد الكل', deselectAll: 'إلغاء التحديد', downloadSelected: 'تنزيل المحدد', cancel: 'إلغاء' },
+        'vi': { select: 'Chọn', downloadAll: 'Tải xuống tất cả', selectAll: 'Chọn tất cả', deselectAll: 'Bỏ chọn tất cả', downloadSelected: 'Tải mục đã chọn', cancel: 'Hủy' },
+        'id': { select: 'Pilih', downloadAll: 'Unduh semua', selectAll: 'Pilih semua', deselectAll: 'Batal pilih semua', downloadSelected: 'Unduh yang dipilih', cancel: 'Batal' },
+        'th': { select: 'เลือก', downloadAll: 'ดาวน์โหลดทั้งหมด', selectAll: 'เลือกทั้งหมด', deselectAll: 'ยกเลิกการเลือก', downloadSelected: 'ดาวน์โหลดที่เลือก', cancel: 'ยกเลิก' },
+        'hi': { select: 'चुनें', downloadAll: 'सभी डाउनलोड करें', selectAll: 'सभी चुनें', deselectAll: 'चयन हटाएँ', downloadSelected: 'चयनित डाउनलोड करें', cancel: 'रद्द करें' }
+      };
+      var table = translations[lang] || translations[lang.split('-')[0]] || translations['en'];
+      return table[key] || translations['en'][key] || key;
     }
 
     function fileUrl(sessionId, fileId) {
@@ -368,34 +660,6 @@
           iframe.parentNode.removeChild(iframe);
         }
       }, 60000);
-    }
-
-    function downloadAllText() {
-      var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-      var translations = {
-        'zh': '下载全部',
-        'zh-cn': '下载全部',
-        'zh-sg': '下载全部',
-        'zh-tw': '下載全部',
-        'zh-hk': '下載全部',
-        'ja': 'すべてダウンロード',
-        'ko': '모두 다운로드',
-        'de': 'Alle herunterladen',
-        'fr': 'Tout télécharger',
-        'es': 'Descargar todo',
-        'it': 'Scarica tutto',
-        'pt': 'Baixar tudo',
-        'ru': 'Скачать всё',
-        'uk': 'Завантажити все',
-        'pl': 'Pobierz wszystko',
-        'tr': 'Tümünü indir',
-        'ar': 'تنزيل الكل',
-        'vi': 'Tải xuống tất cả',
-        'id': 'Unduh semua',
-        'th': 'ดาวน์โหลดทั้งหมด',
-        'hi': 'सभी डाउनलोड करें'
-      };
-      return translations[lang] || translations[lang.split('-')[0]] || 'Download all';
     }
 
     function escapeHtml(text) {
